@@ -109,7 +109,7 @@ namespace Payanarvorkss.Payanar.Tabless.Api.DataModelss
         public IEnumerable<PayanarTableRow> Rows { get; set; }
         public void AddRow(DtoModelss.PayanarTableRow row)
         {
-            (Rows as IList<PayanarTableRow>).Add(new PayanarTableRow(row.Cells) { UniqueId = row.UniqueId });
+            (Rows as IList<PayanarTableRow>).Add(new PayanarTableRow(row.Cells) { UniqueId = row.UniqueId, IsDirty = row.IsDirty, IsNew = row.IsNew });
         }
     }
     public class PayanarTableRow
@@ -124,6 +124,10 @@ namespace Payanarvorkss.Payanar.Tabless.Api.DataModelss
         public string UniqueId { get; set; } = String.Empty;
         [BsonElement("cells")]
         public IDictionary<string, PayanarTableCell> Cells { get; set; }
+        [BsonIgnore]
+        public bool IsNew { get; set; }
+        [BsonIgnore]
+        public bool IsDirty { get; set; }
         public void SetValue(string columnName, string value)
         {
             Cells[columnName].Value = value;
@@ -132,7 +136,7 @@ namespace Payanarvorkss.Payanar.Tabless.Api.DataModelss
         {
             cells?.ToList().ForEach(v =>
             {
-                Cells.Add(v.Key, new PayanarTableCell() { ColumnDesignUniqueId = v.Value.ColumnDesignUniqueId, Value = v.Value.Value });
+                Cells.Add(v.Key, new PayanarTableCell() { ColumnDesignUniqueId = v.Value.ColumnDesignUniqueId, Value = v.Value.Value, ReferencedPayanarTableDesignUniqueId = v.Value.ReferencedPayanarTableDesignUniqueId, ReferencedPayanarTableRowUniqueId = v.Value.ReferencedPayanarTableRowUniqueId });
             });
         }
     }
@@ -142,5 +146,11 @@ namespace Payanarvorkss.Payanar.Tabless.Api.DataModelss
         public string ColumnDesignUniqueId { get; set; }
         [BsonElement("value")]
         public string Value { get; set; }
+        [BsonElement("referencedPayanarTableDesignUniqueId")]
+        public System.String ReferencedPayanarTableDesignUniqueId { get; set; }
+        [BsonElement("referencedPayanarTableRowUniqueId")]
+        public System.String ReferencedPayanarTableRowUniqueId { get; set; }
+        [BsonIgnore]
+        public bool IsDirty { get; set; }
     }
 }

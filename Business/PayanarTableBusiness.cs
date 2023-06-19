@@ -1,7 +1,10 @@
-﻿using MongoDB.Bson;
+﻿using Microsoft.Extensions.Options;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using Payanarvorkss.Payanar.Tabless.Api.DataModelss;
 using Payanarvorkss.Payanar.Tabless.Api.DtoModelss;
+using Payanarvorkss.Payanar.Tabless.Api.FileSystemss;
+using System.Reflection.Metadata;
 
 namespace Payanarvorkss.Payanar.Tabless.Api.Business
 {
@@ -9,13 +12,25 @@ namespace Payanarvorkss.Payanar.Tabless.Api.Business
     {
         public async Task<DataModelss.PayanarTable> Create(DtoModelss.PayanarTable table)
         {
+            PayanarFile.Save(ConvertTo(table)); return null;
+
             DataModelss.PayanarTable dataTable = ConvertTo(table);
             var client = new MongoDB.Driver.MongoClient("mongodb+srv://bhuvaness:Kg3dQIRhQeKmKAt7@cluster0.dt0ycsn.mongodb.net/?retryWrites=true&w=majority");
             var database = client.GetDatabase("PayanarTabless");
             var payanarTableRowss = database.GetCollection<DataModelss.PayanarTableRow>(table.UniqueId);
             dataTable.Rows.ToList().ForEach(v =>
             {
-                payanarTableRowss.InsertOneAsync(v);
+                if (v.IsNew)
+                    payanarTableRowss.InsertOneAsync(v);
+                else if (v.IsDirty)
+                {
+                    payanarTableRowss.FindOneAndReplaceAsync<DataModelss.PayanarTableRow>(u => u.UniqueId == v.UniqueId, v);
+                    ////payanarTableRowss.FindOneAndReplaceAsync(v);
+
+                    ////var filter = Builders<DataModelss.PayanarTableRow>.Filter.Eq("_id", v.UniqueId);
+                    ////var update = Builders<DataModelss.PayanarTableRow>.Update.Set(v.UniqueId, v);
+                    ////payanarTableRowss.UpdateOneAsync(filter, update);
+                }
             });
             return dataTable;
         }

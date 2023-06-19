@@ -1,4 +1,5 @@
-﻿using MongoDB.Bson.Serialization.Attributes;
+﻿using Microsoft.Extensions.Primitives;
+using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json;
 using Payanarvorkss.Payanar.Tabless.Api.Utilitiess;
 
@@ -10,6 +11,8 @@ namespace Payanarvorkss.Payanar.Tabless.Api.DtoModelss
         string UniqueId { get; set; }
         string Name { get; set; }
         bool IsSystemType { get; set; }
+        bool IsNew { get; set; }
+        bool IsDirty { get; set; }
     }
     public class PayanarType : IPayanarType
     {
@@ -17,6 +20,8 @@ namespace Payanarvorkss.Payanar.Tabless.Api.DtoModelss
         public string ParentUniqueId { get; set; } = String.Empty;
         public string Name { get; set; } = String.Empty;
         public bool IsSystemType { get; set; }
+        public bool IsNew { get; set; }
+        public bool IsDirty { get; set; }
     }
     public interface IHierarchicalPayanarType : IPayanarType
     {
@@ -91,13 +96,12 @@ namespace Payanarvorkss.Payanar.Tabless.Api.DtoModelss
         {
             Rows = new List<DtoModelss.PayanarTableRow>();
         }
-        ////public PayanarTableDesign TableDesign { get; set; }
         public string UniqueId { get; set; } = String.Empty;
         public string Name { get; set; } = String.Empty;
         public IEnumerable<PayanarTableRow> Rows { get; set; }
         public void AddRow(DataModelss.PayanarTableRow row)
         {
-            (Rows as IList<DtoModelss.PayanarTableRow>).Add(new DtoModelss.PayanarTableRow(row.Cells) { UniqueId = row.UniqueId });
+            (Rows as IList<DtoModelss.PayanarTableRow>).Add(new DtoModelss.PayanarTableRow(row.Cells) { UniqueId = row.UniqueId, IsNew = false, IsDirty = false });
         }
     }
     public class PayanarTableRow
@@ -109,20 +113,30 @@ namespace Payanarvorkss.Payanar.Tabless.Api.DtoModelss
             AddCells(cells);
         }
         public string UniqueId { get; set; } = String.Empty;
+        public bool IsNew { get; set; }
+        public bool IsDirty { get; set; }
         public IDictionary<string, DtoModelss.PayanarTableCell> Cells { get; set; }
+        public PayanarTableCell GetCell(String columnId)
+        {
+            return Cells.FirstOrDefault(eachCell => eachCell.Key.Equals(columnId)).Value;
+        }
         private void AddCells(IDictionary<string, DataModelss.PayanarTableCell> cells)
         {
             cells?.ToList().ForEach(v =>
             {
-                Cells.Add(v.Key, new DtoModelss.PayanarTableCell() { ColumnDesignUniqueId = v.Value.ColumnDesignUniqueId, Value = v.Value.Value });
+                Cells.Add(v.Key, new DtoModelss.PayanarTableCell() { ColumnDesignUniqueId = v.Value.ColumnDesignUniqueId, Value = v.Value.Value, IsDirty = false });
             });
         }
     }
     public class PayanarTableCell
     {
         public string ColumnDesignUniqueId { get; set; }
+        [JsonProperty(Required = Required.AllowNull)]
         public System.String ReferencedPayanarTableDesignUniqueId { get; set; }
+        [JsonProperty(Required = Required.AllowNull)]
         public System.String ReferencedPayanarTableRowUniqueId { get; set; }
+        [JsonProperty(Required = Required.AllowNull)]
         public string Value { get; set; }
+        public bool IsDirty { get; set; }
     }
 }
